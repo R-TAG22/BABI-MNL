@@ -1,0 +1,417 @@
+import { useState } from 'react'
+import {
+  Mail,
+  Send,
+  Zap,
+  Users,
+  Plus,
+  CheckCircle2,
+  TrendingUp,
+  Clock,
+  Sparkles,
+  Percent,
+  MessageSquare,
+  AlertCircle,
+} from 'lucide-react'
+import { useStore } from '../context/StoreContext'
+
+export default function EmailMarketingManager() {
+  const { campaigns, setCampaigns, automations, setAutomations } = useStore()
+  const [activeTab, setActiveTab] = useState('campaigns') // 'campaigns' | 'automations' | 'audiences'
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+
+  // New Campaign Form
+  const [name, setName] = useState('')
+  const [subject, setSubject] = useState('')
+  const [recipients, setRecipients] = useState('All Subscribers (1,482 contacts)')
+  const [previewText, setPreviewText] = useState('')
+  const [contentBody, setContentBody] = useState(
+    'Hey {first_name},\n\nWe just dropped our latest batch of custom 3D printed keychains handcrafted in Manila! Use code SOUVENIR10 for 10% off.\n\nCheers,\nThe babi MNL Team'
+  )
+
+  const handleCreateCampaign = (e) => {
+    e.preventDefault()
+    const newCamp = {
+      id: `camp-${Date.now()}`,
+      name,
+      subject,
+      recipients,
+      status: 'Sent',
+      sentDate: new Date().toISOString().split('T')[0],
+      openRate: '41.2%',
+      clickRate: '14.8%',
+    }
+    setCampaigns((prev) => [newCamp, ...prev])
+    setToastMessage(`Campaign "${name}" scheduled and dispatched!`)
+    setIsModalOpen(false)
+    setName('')
+    setSubject('')
+    setTimeout(() => setToastMessage(''), 3500)
+  }
+
+  const handleToggleAutomation = (id) => {
+    setAutomations((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a))
+    )
+    const target = automations.find((a) => a.id === id)
+    setToastMessage(`Turned ${!target?.active ? 'ON' : 'OFF'} automation "${target?.name}"`)
+    setTimeout(() => setToastMessage(''), 3000)
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Toast */}
+      {toastMessage && (
+        <div className="rounded-xl bg-emerald-500 text-white px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={18} />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage('')} className="text-white/80 hover:text-white">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-[#142B1F] tracking-tight">Email & Lifecycle Marketing</h1>
+          <p className="text-sm text-gray-600">
+            Klaviyo-grade newsletters, automated abandoned cart recovery sequences, and post-purchase followups.
+          </p>
+        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="inline-flex items-center gap-2 rounded-xl bg-[#D96B43] px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#c25933] transition-all cursor-pointer"
+        >
+          <Plus size={16} /> Create Broadcast Campaign
+        </button>
+      </div>
+
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl bg-white p-5 shadow-xs border border-gray-200">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Audience</span>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-black text-gray-900">1,482</span>
+            <span className="text-xs font-bold text-emerald-600">+14% this mo</span>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">100% Opt-in GDPR compliant</p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-5 shadow-xs border border-gray-200">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Average Open Rate</span>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-black text-emerald-600">42.8%</span>
+            <span className="text-xs font-semibold text-gray-500">vs 21% ind avg</span>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">High engagement from craft lovers</p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-5 shadow-xs border border-gray-200">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Automated Revenue</span>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-black text-[#D96B43]">₱38,400</span>
+            <span className="text-xs font-semibold text-gray-500">PHP</span>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">Generated by cart abandon sequences</p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-5 shadow-xs border border-gray-200">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Active Sequences</span>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-black text-gray-900">
+              {automations.filter((a) => a.active).length} / {automations.length}
+            </span>
+            <span className="text-xs font-semibold text-emerald-600">Running</span>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">Continuous 24/7 retention engine</p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 gap-6 text-xs font-bold text-gray-500">
+        <button
+          onClick={() => setActiveTab('campaigns')}
+          className={`pb-3 cursor-pointer transition-colors ${
+            activeTab === 'campaigns'
+              ? 'text-[#142B1F] border-b-2 border-[#142B1F]'
+              : 'hover:text-gray-900'
+          }`}
+        >
+          Broadcast Campaigns ({campaigns.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('automations')}
+          className={`pb-3 cursor-pointer transition-colors ${
+            activeTab === 'automations'
+              ? 'text-[#142B1F] border-b-2 border-[#142B1F]'
+              : 'hover:text-gray-900'
+          }`}
+        >
+          Automated Triggers & Flows ({automations.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('audiences')}
+          className={`pb-3 cursor-pointer transition-colors ${
+            activeTab === 'audiences'
+              ? 'text-[#142B1F] border-b-2 border-[#142B1F]'
+              : 'hover:text-gray-900'
+          }`}
+        >
+          Customer Segments (3)
+        </button>
+      </div>
+
+      {/* Tab: Broadcast Campaigns */}
+      {activeTab === 'campaigns' && (
+        <div className="rounded-2xl bg-white shadow-xs border border-gray-200 overflow-hidden">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3.5">Campaign Name & Subject</th>
+                <th className="px-6 py-3.5">Recipients</th>
+                <th className="px-6 py-3.5">Status</th>
+                <th className="px-6 py-3.5">Date</th>
+                <th className="px-6 py-3.5 text-center">Open Rate</th>
+                <th className="px-6 py-3.5 text-center">Click Rate</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 font-medium">
+              {campaigns.map((camp) => (
+                <tr key={camp.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <p className="font-bold text-gray-900">{camp.name}</p>
+                    <p className="text-gray-500 text-[11px] truncate max-w-md">{camp.subject}</p>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600 whitespace-nowrap">{camp.recipients}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        camp.status === 'Sent'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {camp.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{camp.sentDate}</td>
+                  <td className="px-6 py-4 text-center font-bold text-gray-900 whitespace-nowrap">
+                    {camp.openRate}
+                  </td>
+                  <td className="px-6 py-4 text-center font-bold text-gray-900 whitespace-nowrap">
+                    {camp.clickRate}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Tab: Automations */}
+      {activeTab === 'automations' && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {automations.map((auto) => (
+            <div
+              key={auto.id}
+              className={`flex flex-col justify-between rounded-2xl bg-white p-5 shadow-xs border transition-all ${
+                auto.active ? 'border-gray-200' : 'border-gray-200 opacity-60 bg-gray-50'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                      auto.active ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    <Zap size={11} /> {auto.active ? 'Flow Active' : 'Paused'}
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={auto.active}
+                      onChange={() => handleToggleAutomation(auto.id)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-gray-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#142B1F]"></div>
+                  </label>
+                </div>
+
+                <h3 className="font-bold text-sm text-gray-900">{auto.name}</h3>
+                <p className="mt-1 text-xs text-gray-500 flex items-center gap-1.5">
+                  <Clock size={12} className="text-gray-400 shrink-0" />
+                  <span>{auto.trigger}</span>
+                </p>
+
+                <div className="mt-4 rounded-xl bg-gray-50 p-3 border border-gray-100 space-y-1 text-xs">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Emails Delivered:</span>
+                    <span className="font-bold text-gray-900">{auto.stats.sent}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Avg Open Rate:</span>
+                    <span className="font-bold text-emerald-600">{auto.stats.openRate}</span>
+                  </div>
+                  {auto.stats.recovered && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Sales Recovered:</span>
+                      <span className="font-extrabold text-[#D96B43]">{auto.stats.recovered}</span>
+                    </div>
+                  )}
+                  {auto.stats.reviewsGained && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Reviews Gathered:</span>
+                      <span className="font-bold text-blue-600">{auto.stats.reviewsGained} verified</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-400">
+                Triggered automatically by Shopify/WooCommerce webhook event
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tab: Audiences */}
+      {activeTab === 'audiences' && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-2xl bg-white p-5 shadow-xs border border-gray-200">
+            <div className="flex items-center gap-2 mb-2 text-[#142B1F] font-bold text-sm">
+              <Users size={16} /> All Active Subscribers
+            </div>
+            <p className="text-xs text-gray-500">Every customer who consented at checkout or through the footer form.</p>
+            <div className="mt-4 flex items-baseline justify-between border-t border-gray-100 pt-3">
+              <span className="text-2xl font-black text-gray-900">1,482</span>
+              <span className="text-xs font-semibold text-emerald-600">100% Deliverable</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-xs border border-gray-200">
+            <div className="flex items-center gap-2 mb-2 text-[#D96B43] font-bold text-sm">
+              <Sparkles size={16} /> VIP Collectors
+            </div>
+            <p className="text-xs text-gray-500">Repeat buyers with &gt; ₱1,500 lifetime spend or 2+ purchases.</p>
+            <div className="mt-4 flex items-baseline justify-between border-t border-gray-100 pt-3">
+              <span className="text-2xl font-black text-gray-900">320</span>
+              <span className="text-xs font-semibold text-[#D96B43]">AOV: ₱1,840</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow-xs border border-gray-200">
+            <div className="flex items-center gap-2 mb-2 text-blue-700 font-bold text-sm">
+              <Percent size={16} /> Abandoned Checkout Leads
+            </div>
+            <p className="text-xs text-gray-500">Shoppers who initiated checkout in the last 30 days without payment.</p>
+            <div className="mt-4 flex items-baseline justify-between border-t border-gray-100 pt-3">
+              <span className="text-2xl font-black text-gray-900">194</span>
+              <span className="text-xs font-semibold text-blue-600">Active Retargeting</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Campaign Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl border border-gray-100 max-h-[92vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+              <h3 className="text-lg font-black text-[#142B1F]">Create Broadcast Email Campaign</h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCampaign} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Internal Campaign Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-medium focus:border-[#D96B43] focus:outline-hidden"
+                  placeholder="e.g. End of Month Jeepney Drop & Free Shipping"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Email Subject Line</label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-medium focus:border-[#D96B43] focus:outline-hidden"
+                  placeholder="e.g. 🎁 Handcrafted in Manila: New Dual-Tone Jeepneys Just Landed!"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Audience Segment</label>
+                  <select
+                    value={recipients}
+                    onChange={(e) => setRecipients(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-[#D96B43] focus:outline-hidden"
+                  >
+                    <option value="All Subscribers (1,482 contacts)">All Subscribers (1,482)</option>
+                    <option value="VIP Collectors (320 contacts)">VIP Collectors (320)</option>
+                    <option value="Abandoned Cart Leads (194 contacts)">Abandoned Cart Leads (194)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Preview Hook Text</label>
+                  <input
+                    type="text"
+                    value={previewText}
+                    onChange={(e) => setPreviewText(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs focus:border-[#D96B43] focus:outline-hidden"
+                    placeholder="Short snippet visible in inbox previews..."
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Email Content Message</label>
+                <textarea
+                  rows={6}
+                  value={contentBody}
+                  onChange={(e) => setContentBody(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 p-3 text-xs font-mono focus:border-[#D96B43] focus:outline-hidden leading-relaxed"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-xl border border-gray-300 px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#142B1F] px-5 py-2 text-xs font-bold text-white hover:bg-[#1a3828] cursor-pointer shadow-md"
+                >
+                  <Send size={14} /> Send Broadcast Now
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

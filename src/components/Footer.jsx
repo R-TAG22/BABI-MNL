@@ -162,10 +162,17 @@ export default function Footer() {
             </a>
           </div>
 
-          {/* Centered Copyright Line */}
-          <p className="mt-4 text-xs text-white/60">
-            © 2026 Babi MNL. All rights reserved.
-          </p>
+          {/* Centered Copyright Line & Staff Portal Access */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-white/60">
+            <span>© 2026 Babi MNL. All rights reserved.</span>
+            <span>•</span>
+            <Link
+              to="/admin"
+              className="text-[#D96B43] hover:text-white transition-colors underline font-medium"
+            >
+              Merchant Admin & CMS Studio ⚡
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

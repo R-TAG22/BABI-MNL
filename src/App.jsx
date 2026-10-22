@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { HashRouter, Routes, Route, useLocation, Link, Navigate } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import NewsletterSection from './components/NewsletterSection'
@@ -13,6 +13,20 @@ import FaqsPage from './pages/FaqsPage'
 import CustomOrderPage from './pages/CustomOrderPage'
 import PolicyPage from './pages/PolicyPage'
 
+// Store and Admin imports
+import { StoreProvider } from './context/StoreContext'
+import AdminLayout from './admin/AdminLayout'
+import DashboardOverview from './admin/DashboardOverview'
+import VisualPageBuilder from './admin/VisualPageBuilder'
+import CodeEditorMode from './admin/CodeEditorMode'
+import ProductsManager from './admin/ProductsManager'
+import OrdersManager from './admin/OrdersManager'
+import RiskChargebackManager from './admin/RiskChargebackManager'
+import BlogCmsManager from './admin/BlogCmsManager'
+import EmailMarketingManager from './admin/EmailMarketingManager'
+import AppStoreMarketplace from './admin/AppStoreMarketplace'
+import AdminLogin from './admin/AdminLogin'
+
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
@@ -21,7 +35,7 @@ function ScrollToTop() {
   return null
 }
 
-function MainLayout() {
+function StorefrontLayout() {
   const [cartItems, setCartItems] = useState([
     {
       id: 'classic-manila-jeepney-keychain',
@@ -97,6 +111,16 @@ function MainLayout() {
         </div>
       )}
 
+      {/* Subtle Floating Admin Portal Access Badge */}
+      <Link
+        to="/admin"
+        className="fixed bottom-6 left-6 z-40 flex items-center gap-2 rounded-full bg-[#142B1F] text-white px-4 py-2 text-xs font-bold shadow-2xl hover:bg-black transition-all border border-white/20 group hover:scale-105"
+        title="Open Admin Dashboard & Visual Page Builder"
+      >
+        <span className="h-2 w-2 rounded-full bg-[#5EBA8A] animate-ping" />
+        <span>Admin CMS ⚡</span>
+      </Link>
+
       {/* Dynamic Routed Views */}
       <div className="flex-1">
         <Routes>
@@ -104,7 +128,6 @@ function MainLayout() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/products" element={<ProductsPage onAddToCart={handleAddToCart} />} />
           <Route path="/products/:slug" element={<ProductDetailPage onAddToCart={handleAddToCart} />} />
-          {/* Legacy /product route redirects to default Jeepney PDP */}
           <Route path="/product" element={<ProductDetailPage onAddToCart={handleAddToCart} />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/faqs" element={<FaqsPage />} />
@@ -137,10 +160,104 @@ function MainLayout() {
   )
 }
 
+function AdminRouteWrapper({ children }) {
+  return <AdminLayout>{children}</AdminLayout>
+}
+
+function RootApp() {
+  const { pathname } = useLocation()
+  const isAdminPath = pathname.startsWith('/admin')
+
+  if (isAdminPath) {
+    return (
+      <Routes>
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminRouteWrapper>
+              <DashboardOverview />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route
+          path="/admin/builder"
+          element={
+            <AdminRouteWrapper>
+              <VisualPageBuilder />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route
+          path="/admin/code-mode"
+          element={
+            <AdminRouteWrapper>
+              <CodeEditorMode />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route
+          path="/admin/products"
+          element={
+            <AdminRouteWrapper>
+              <ProductsManager />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRouteWrapper>
+              <OrdersManager />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route
+          path="/admin/risk"
+          element={
+            <AdminRouteWrapper>
+              <RiskChargebackManager />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route
+          path="/admin/blog"
+          element={
+            <AdminRouteWrapper>
+              <BlogCmsManager />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route
+          path="/admin/marketing"
+          element={
+            <AdminRouteWrapper>
+              <EmailMarketingManager />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route
+          path="/admin/apps"
+          element={
+            <AdminRouteWrapper>
+              <AppStoreMarketplace />
+            </AdminRouteWrapper>
+          }
+        />
+        <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+      </Routes>
+    )
+  }
+
+  return <StorefrontLayout />
+}
+
 export default function App() {
   return (
-    <HashRouter>
-      <MainLayout />
-    </HashRouter>
+    <StoreProvider>
+      <HashRouter>
+        <RootApp />
+      </HashRouter>
+    </StoreProvider>
   )
 }

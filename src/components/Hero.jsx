@@ -39,26 +39,35 @@ const trustBadges = [
   { icon: BadgeCheck, label: 'Premium Quality' },
 ]
 
-export default function Hero() {
+export default function Hero({ settings }) {
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
-  // 3000ms timer (2 to 3 seconds auto-rotation)
+  const activeSlides = [
+    {
+      ...slides[0],
+      headline: settings?.headline || slides[0].headline,
+      subtitle: settings?.subtitle || slides[0].subtitle,
+      tag: settings?.tag || slides[0].tag,
+    },
+    slides[1],
+    slides[2],
+  ]
+
+  const intervalTime = settings?.autoRotateInterval || 3000
+
+  // Auto-rotation timer based on CMS settings
   useEffect(() => {
     if (isPaused) return
 
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length)
-    }, 3000)
+      setCurrent((prev) => (prev + 1) % activeSlides.length)
+    }, intervalTime)
 
     return () => clearInterval(timer)
-  }, [isPaused])
+  }, [isPaused, intervalTime, activeSlides.length])
 
-  const goToSlide = (idx) => {
-    setCurrent(idx)
-  }
-
-  const activeSlide = slides[current]
+  const activeSlide = activeSlides[current]
 
   return (
     <section
@@ -149,31 +158,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Interactive Pagination Dots at Bottom Center */}
-      <div
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 rounded-full bg-black/40 backdrop-blur-md px-4 py-2 border border-white/15 shadow-lg"
-        role="tablist"
-        aria-label="Hero carousel pagination"
-      >
-        {slides.map((slide, idx) => {
-          const isActive = idx === current
-          return (
-            <button
-              key={slide.id}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-label={`Go to slide ${idx + 1}: ${slide.headline}`}
-              onClick={() => goToSlide(idx)}
-              className={`transition-all duration-300 cursor-pointer rounded-full ${
-                isActive
-                  ? 'h-2.5 w-7 bg-[#D96B43] shadow-xs'
-                  : 'h-2.5 w-2.5 bg-white/60 hover:bg-white'
-              }`}
-            />
-          )
-        })}
-      </div>
     </section>
   )
 }

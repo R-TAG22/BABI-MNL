@@ -38,10 +38,6 @@ export default function HeroSlideshow() {
     return () => clearInterval(timer)
   }, [isPaused])
 
-  const goToSlide = (index) => {
-    setCurrent(index)
-  }
-
   return (
     <div
       className="relative w-full overflow-hidden rounded-[32px] bg-stone-warm shadow-xl border border-black/5"
@@ -78,34 +74,6 @@ export default function HeroSlideshow() {
           )
         })}
 
-        {/* Subtle Gradient Overlay on bottom for dot readability */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent z-20" />
-
-        {/* Manual Pagination Dots at Bottom-Right */}
-        <div
-          className="absolute bottom-4 right-5 z-30 flex items-center gap-2 rounded-full bg-black/30 backdrop-blur-md px-3 py-1.5 border border-white/10"
-          role="tablist"
-          aria-label="Slideshow pagination"
-        >
-          {slides.map((slide, idx) => {
-            const isActive = idx === current
-            return (
-              <button
-                key={slide.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-label={`Go to slide ${idx + 1}: ${slide.caption}`}
-                onClick={() => goToSlide(idx)}
-                className={`transition-all duration-300 cursor-pointer rounded-full ${
-                  isActive
-                    ? 'h-2.5 w-6 bg-terracotta shadow-xs'
-                    : 'h-2.5 w-2.5 bg-white/70 hover:bg-white'
-                }`}
-              />
-            )
-          })}
-        </div>
       </div>
     </div>
   )
