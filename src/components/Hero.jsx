@@ -1,5 +1,6 @@
-import { ArrowRight, Leaf, MapPin, BadgeCheck } from 'lucide-react'
-import { Button, container } from './shared'
+import { Link } from 'react-router-dom'
+import { ArrowRight, Leaf, MapPin, BadgeCheck, Sparkles } from 'lucide-react'
+import { container } from './shared'
 
 const badges = [
   { icon: Leaf, label: 'Eco-Friendly PLA' },
@@ -10,22 +11,33 @@ const badges = [
 export default function Hero() {
   return (
     <section id="home" className="overflow-hidden pt-8 pb-12 lg:pt-12">
-      <div className={`${container} grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]`}>
+      <div className={`${container} grid items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]`}>
         <div>
-          <p className="font-script text-4xl leading-none text-terracotta sm:text-[40px]">Freshly Crafted</p>
+          <p className="font-script text-4xl leading-none text-terracotta sm:text-[42px]">Freshly Crafted</p>
           <h1 className="mt-3 text-4xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl lg:text-[56px]">
             3D Printed <br className="hidden sm:block" />Goodness <br className="hidden sm:block" />in Manila
           </h1>
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-muted">
             At Babi MNL, we craft highly-detailed 3D-printed souvenirs, custom keychains, and figurines using premium materials and a whole lot of love.
           </p>
-          <Button className="mt-7 px-6 py-3 text-sm">
-            Order Now <ArrowRight size={16} />
-          </Button>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <Link
+              to="/products"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-terracotta px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#c25b36] hover:shadow-lg active:translate-y-0"
+            >
+              Shop Products <ArrowRight size={16} />
+            </Link>
+            <Link
+              to="/custom-order"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-forest/30 bg-transparent px-5 py-3 text-sm font-semibold text-forest transition-all duration-200 hover:bg-forest/5"
+            >
+              <Sparkles size={16} /> Custom Order
+            </Link>
+          </div>
           <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-3">
             {badges.map(({ icon: Icon, label }) => (
               <li key={label} className="flex items-center gap-2 text-xs font-medium text-ink">
-                <Icon size={20} strokeWidth={1.5} />
+                <Icon size={20} strokeWidth={1.5} className="text-forest" />
                 <span className="max-w-[80px] leading-tight">{label}</span>
               </li>
             ))}
@@ -33,7 +45,7 @@ export default function Hero() {
         </div>
 
         <div className="relative">
-          <div className="relative overflow-hidden rounded-[32px] bg-stone-warm">
+          <div className="relative overflow-hidden rounded-[32px] bg-stone-warm shadow-xl">
             <img
               src="/images/hero-image.jpg"
               alt="Stacked 3D printed jeepney keychains, carabao figurines and palm tree medallions on a stone block"

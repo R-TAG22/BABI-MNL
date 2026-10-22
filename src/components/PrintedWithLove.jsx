@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react'
-import { Button, container } from './shared'
+import { Link } from 'react-router-dom'
+import { container } from './shared'
 
 export default function PrintedWithLove() {
   return (
@@ -9,11 +10,14 @@ export default function PrintedWithLove() {
           <div>
             <h2 className="font-script text-5xl leading-none text-white sm:text-6xl">Printed with Love ♡</h2>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-white/75">
-              Our handcrafted 3D process to template of our custom, and comfert and emotion relesent using premium custommole lot of love.
+              Handcrafted in the heart of Manila. We turn Filipino cultural icons, personalized nameplates, and playful miniatures into tactile keepsakes using eco-friendly plant-based PLA and artisan attention to detail.
             </p>
-            <Button className="mt-6 px-6 py-3 text-sm">
+            <Link
+              to="/about"
+              className="mt-6 inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-terracotta px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#c25b36] hover:shadow-lg active:translate-y-0"
+            >
               Our Story <ArrowRight size={16} />
-            </Button>
+            </Link>
           </div>
           <div className="flex justify-center md:justify-end">
             <div className="relative">

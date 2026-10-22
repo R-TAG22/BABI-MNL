@@ -1,8 +1,8 @@
 import { Star } from 'lucide-react'
 
-export const container = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-12'
+export const container = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
 
-export function Logo({ light = false, className = '', href = '#home' }) {
+export function Logo({ light = false, className = '', href = '/' }) {
   const color = light ? 'text-white' : 'text-forest'
   return (
     <a href={href} className={`inline-flex flex-col leading-none ${color} ${className}`} aria-label="babi MNL home">
