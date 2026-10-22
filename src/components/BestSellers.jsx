@@ -1,20 +1,25 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, ShoppingBag } from 'lucide-react'
-import { Placeholder, Stars, container } from './shared'
-
-const products = [
-  { id: 'bestseller-jeepney', name: 'Jeepney Keychain', price: 299, img: '/images/product-bestseller-jeepney.jpg', isPdp: true },
-  { id: 'bestseller-nameplate', name: 'Custom Nameplates', price: 199 },
-  { id: 'bestseller-carabao', name: 'Carabao Miniature', price: 350, img: '/images/carabao.jpg' },
-  { id: 'bestseller-palm', name: 'Miniature Palm', price: 150, img: '/images/Palm_tree_medallion_keychain_laid_2K_20261019221426.jpg' },
-]
+import { Stars, container } from './shared'
+import { productsData } from '../data/products'
 
 export default function BestSellers({ onAddToCart }) {
   const [addedItem, setAddedItem] = useState(null)
 
+  // Use top 4 best sellers
+  const products = productsData.slice(0, 4)
+
   const handleAdd = (p) => {
-    if (onAddToCart) onAddToCart(p)
+    if (onAddToCart) {
+      onAddToCart({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        img: p.image,
+        quantity: 1,
+      })
+    }
     setAddedItem(p.id)
     setTimeout(() => {
       setAddedItem((curr) => (curr === p.id ? null : curr))
@@ -40,55 +45,59 @@ export default function BestSellers({ onAddToCart }) {
             return (
               <article
                 key={p.id}
-                className="flex flex-col justify-between rounded-3xl border border-black/5 bg-stone-warm p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="flex flex-col justify-between rounded-3xl border border-black/5 bg-[#F5EFE6] p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <div>
-                  {p.img ? (
+                  <Link
+                    to={`/products/${p.slug}`}
+                    className="block overflow-hidden rounded-2xl bg-white aspect-square group"
+                  >
                     <img
-                      src={p.img}
+                      src={p.image}
                       alt={p.name}
                       loading="lazy"
-                      className="aspect-square w-full rounded-2xl object-cover"
+                      className="aspect-square w-full rounded-2xl object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                  ) : (
-                    <Placeholder label={p.name} className="aspect-square rounded-2xl" />
-                  )}
-                  <h3 className="mt-3 px-1 text-sm font-semibold text-ink">
-                    {p.isPdp ? (
-                      <Link to="/product" className="hover:text-terracotta transition-colors">
-                        {p.name}
-                      </Link>
-                    ) : (
-                      <Link to="/products" className="hover:text-terracotta transition-colors">
-                        {p.name}
-                      </Link>
-                    )}
+                  </Link>
+                  <h3 className="mt-3 px-1 text-sm font-semibold text-ink line-clamp-2">
+                    <Link to={`/products/${p.slug}`} className="hover:text-terracotta transition-colors">
+                      {p.name}
+                    </Link>
                   </h3>
-                  <div className="mt-1 px-1">
-                    <Stars />
+                  <div className="mt-1 px-1 flex items-center justify-between">
+                    <Stars size={13} />
+                    <span className="text-[11px] text-muted font-bold">★ {p.rating}</span>
                   </div>
                   <p className="mt-1 px-1 text-lg font-extrabold text-ink">₱{p.price}</p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleAdd(p)}
-                  className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-full py-2 text-xs font-semibold transition-all duration-200 cursor-pointer active:scale-95 ${
-                    isAdded
-                      ? 'bg-forest text-white'
-                      : 'bg-terracotta text-white hover:bg-[#c25b36]'
-                  }`}
-                >
-                  {isAdded ? (
-                    <>
-                      <Check size={14} /> Added
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag size={14} /> Add to Cart
-                    </>
-                  )}
-                </button>
+                <div className="mt-3 pt-1 flex gap-2">
+                  <Link
+                    to={`/products/${p.slug}`}
+                    className="flex-1 rounded-full border border-forest/20 text-center py-2 text-[11px] font-semibold text-forest hover:bg-forest/5"
+                  >
+                    Details
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleAdd(p)}
+                    className={`flex items-center justify-center gap-1 rounded-full px-3 py-2 text-[11px] font-semibold transition-all duration-200 cursor-pointer active:scale-95 ${
+                      isAdded
+                        ? 'bg-forest text-white'
+                        : 'bg-terracotta text-white hover:bg-[#c25b36]'
+                    }`}
+                  >
+                    {isAdded ? (
+                      <>
+                        <Check size={12} /> Added
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={12} /> Add
+                      </>
+                    )}
+                  </button>
+                </div>
               </article>
             )
           })}

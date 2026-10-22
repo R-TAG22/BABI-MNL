@@ -5,7 +5,6 @@ import PromoBanner from '../components/PromoBanner'
 import Testimonials from '../components/Testimonials'
 import PrintedWithLove from '../components/PrintedWithLove'
 import HomeFaq from '../components/HomeFaq'
-import Newsletter from '../components/Newsletter'
 
 export default function HomePage({ onAddToCart }) {
   return (
@@ -16,9 +15,8 @@ export default function HomePage({ onAddToCart }) {
       <PromoBanner />
       <Testimonials />
       <PrintedWithLove />
-      {/* Home Page FAQs compact 4-item accordion placed directly above Newsletter */}
+      {/* Home Page FAQs compact 4-item accordion directly above global NewsletterSection */}
       <HomeFaq />
-      <Newsletter />
     </main>
   )
 }

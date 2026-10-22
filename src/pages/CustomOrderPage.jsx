@@ -1,500 +1,512 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Upload, Check, Palette, Sparkles, Plus, Minus, CheckCircle2, X, Info } from 'lucide-react'
+import {
+  Upload,
+  FileCode,
+  FileImage,
+  Trash2,
+  CheckCircle2,
+  X,
+  Info,
+  Clock,
+  Send,
+  Layers,
+  Palette,
+  Sparkles,
+} from 'lucide-react'
 import { container } from '../components/shared'
 
-const colorSwatches = [
-  { name: 'Terracotta', hex: '#D96B43', label: 'Terracotta Warmth' },
-  { name: 'Deep Forest', hex: '#1B3B2B', label: 'Manila Forest Green' },
-  { name: 'Warm Cream', hex: '#FBF8F2', label: 'Natural Sand' },
-  { name: 'Pastel Mint', hex: '#5EBA8A', label: 'Tropical Mint' },
-  { name: 'Solar Amber', hex: '#F4B342', label: 'Sunburst Amber' },
-  { name: 'Midnight Ink', hex: '#1C1C1C', label: 'Charcoal Black' },
-  { name: 'Marble Pearl', hex: '#E2DFD8', label: 'Stone Marble' },
+const materials = [
+  { id: 'standard', name: 'Standard PLA', desc: 'Durable, vibrant, ideal for general prints & keychains' },
+  { id: 'matte', name: 'Matte PLA', desc: 'Anti-glare velvety surface with concealed layer lines' },
+  { id: 'silk', name: 'Silk PLA', desc: 'High-gloss metallic sheen, great for medallions & awards' },
+  { id: 'wood', name: 'Wood Fill PLA', desc: 'Real wood fiber composite with tactile grain' },
 ]
 
-const itemTypes = [
-  { id: 'nameplate', label: 'Custom Desk Nameplate', basePrice: 399, desc: 'Dual-layer raised 3D typography with stand' },
-  { id: 'keychain', label: 'Embossed Souvenir Keychain', basePrice: 249, desc: 'Pocket-sized medallion with reinforced brass ring' },
-  { id: 'figurine', label: 'Artisan Miniature / Figurine', basePrice: 350, desc: 'Cultural or custom low-poly / high-detail sculpt' },
-  { id: 'logo-sign', label: '3D Company Logo / Monogram', basePrice: 499, desc: 'Multi-layer brand emblem for offices or events' },
+const colorOptions = [
+  { id: 'single', label: 'Single Color', desc: 'Uniform solid shade' },
+  { id: 'multi', label: 'Multi-Color / Dual-Tone', desc: 'Up to 4 filament colors fused in 3D' },
+  { id: 'custom-palette', label: 'Custom Palette Request', desc: 'Specific Pantone / branding match' },
 ]
 
 export default function CustomOrderPage() {
-  const [itemType, setItemType] = useState('nameplate')
-  const [customText, setCustomText] = useState('')
-  const [fontChoice, setFontChoice] = useState('modern')
-  const [primaryColor, setPrimaryColor] = useState(colorSwatches[0])
-  const [accentColor, setAccentColor] = useState(colorSwatches[1])
-  const [quantity, setQuantity] = useState(1)
-  const [uploadedFile, setUploadedFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState(null)
-  const [customerName, setCustomerName] = useState('')
-  const [customerEmail, setCustomerEmail] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
-  const [notes, setNotes] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [orderRef, setOrderRef] = useState('')
+  // 1. Order Type Toggle
+  const [orderType, setOrderType] = useState('file-ready') // 'file-ready' or 'need-design'
 
+  // 2. Drag & Drop Upload Zone & File List
+  const [files, setFiles] = useState([])
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef(null)
 
-  const selectedItem = itemTypes.find((t) => t.id === itemType) || itemTypes[0]
-  const unitPrice = selectedItem.basePrice
-  const discountMultiplier = quantity >= 20 ? 0.8 : quantity >= 10 ? 0.9 : 1
-  const totalPrice = Math.round(unitPrice * quantity * discountMultiplier)
+  // 3. Print Specifications
+  const [selectedMaterial, setSelectedMaterial] = useState('standard')
+  const [selectedColorMode, setSelectedColorMode] = useState('multi')
+  const [colorNotes, setColorNotes] = useState('')
+  const [dimensions, setDimensions] = useState('')
+  const [quantityTier, setQuantityTier] = useState('prototype') // 'prototype' or 'bulk'
+  const [unitsCount, setUnitsCount] = useState(1)
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setUploadedFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result)
-      }
-      reader.readAsDataURL(file)
+  // 4. Contact & Quote Delivery Preference
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [contactNumber, setContactNumber] = useState('')
+  const [responseMethod, setResponseMethod] = useState('Email') // 'Email' or 'Viber / WhatsApp / Phone'
+  const [projectNotes, setProjectNotes] = useState('')
+
+  // Submission State
+  const [showModal, setShowModal] = useState(false)
+  const [quoteRef, setQuoteRef] = useState('')
+
+  const handleFiles = (incomingFiles) => {
+    const validArray = Array.from(incomingFiles).map((file) => ({
+      id: Math.random().toString(36).substring(7),
+      name: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+      type: file.type || file.name.split('.').pop(),
+      raw: file,
+    }))
+    setFiles((prev) => [...prev, ...validArray])
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setIsDragging(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files)
     }
+  }
+
+  const handleDeleteFile = (id) => {
+    setFiles((prev) => prev.filter((f) => f.id !== id))
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const generatedRef = 'BABI-MNL-' + Math.floor(100000 + Math.random() * 900000)
-    setOrderRef(generatedRef)
+    const generatedRef = 'BABI-QUOTE-' + Math.floor(100000 + Math.random() * 900000)
+    setQuoteRef(generatedRef)
     setShowModal(true)
   }
 
   return (
-    <div className="py-12">
+    <div className="py-10 sm:py-14">
       <div className={container}>
-        {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="font-script text-3xl text-terracotta">Handmade &amp; Bespoke</span>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight sm:text-5xl text-ink">
-            Custom 3D Print Request
+        {/* Hero & Notice Banner */}
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="font-script text-3xl sm:text-4xl text-terracotta">
+            Bespoke Fabrication in Manila
+          </span>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl text-ink">
+            Bring Your 3D Ideas to Life
           </h1>
-          <p className="mt-3 text-sm text-muted">
-            Design your one-of-a-kind nameplate, souvenir keychain, or batch corporate favor. Configure your colors, upload references, and preview your creation live.
+          <p className="mt-4 text-sm sm:text-base leading-relaxed text-[#555555]">
+            Upload your existing 3D file or design concept. If you already have the file or sample, we take care of the precision printing. If you don't have a 3D model yet, our Manila studio can design it for you.
           </p>
+
+          {/* Transparent Pricing Notice Card */}
+          <div className="mt-8 text-left rounded-2xl border border-[#E0D7C8] bg-[#F5EFE6] p-5 shadow-xs">
+            <div className="flex items-start gap-3.5">
+              <span className="text-xl shrink-0 mt-0.5">ℹ️</span>
+              <div className="text-xs sm:text-sm text-[#444444] leading-relaxed">
+                <span className="font-bold text-ink">How Pricing Works:</span> Because every custom print varies in material volume, print time, and design complexity, we do not quote instant fixed prices. Once you submit your file or request below, our team analyzes your model and gets back to you within 24 hours with an exact price quote and production timeline via your preferred contact channel (Email or Phone/WhatsApp).
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Custom Order Builder Grid */}
-        <form onSubmit={handleSubmit} className="mt-12 grid gap-10 lg:grid-cols-12 lg:gap-10">
-          {/* Left Column: Configuration Controls (7 cols) */}
-          <div className="space-y-8 lg:col-span-7">
-            {/* 1. Item Type Selector */}
-            <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-forest text-xs font-bold text-white">
-                  1
-                </span>
-                <h2 className="text-base font-bold text-forest sm:text-lg">Select Product Type</h2>
-              </div>
+        {/* Custom Order Submission Form */}
+        <form onSubmit={handleSubmit} className="mx-auto mt-12 max-w-4xl space-y-10">
+          {/* 1. Order Type Selector */}
+          <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-xs font-bold text-white">
+                1
+              </span>
+              <h2 className="text-base sm:text-lg font-bold text-forest">
+                What is your project status?
+              </h2>
+            </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {itemTypes.map((type) => (
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setOrderType('file-ready')}
+                className={`flex flex-col justify-between rounded-2xl border p-5 text-left transition-all cursor-pointer ${
+                  orderType === 'file-ready'
+                    ? 'border-forest bg-[#1B3B2B]/5 ring-2 ring-forest shadow-xs'
+                    : 'border-black/10 bg-[#FBF8F2] hover:border-black/20'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm sm:text-base text-ink">
+                      I have a 3D File / Sample Ready
+                    </span>
+                    {orderType === 'file-ready' && (
+                      <CheckCircle2 size={18} className="text-forest shrink-0" />
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Supports STL, OBJ, 3MF, STEP. Ideal for designers, makers, and clients with 3D models.
+                  </p>
+                </div>
+                <span className="mt-4 inline-block text-[11px] font-semibold text-terracotta">
+                  Direct Print Slicing • Fast Quote
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOrderType('need-design')}
+                className={`flex flex-col justify-between rounded-2xl border p-5 text-left transition-all cursor-pointer ${
+                  orderType === 'need-design'
+                    ? 'border-forest bg-[#1B3B2B]/5 ring-2 ring-forest shadow-xs'
+                    : 'border-black/10 bg-[#FBF8F2] hover:border-black/20'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm sm:text-base text-ink">
+                      I need Babi MNL to design it for me
+                    </span>
+                    {orderType === 'need-design' && (
+                      <CheckCircle2 size={18} className="text-forest shrink-0" />
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Upload reference photos, sketches, logo vectors, or describe your idea. Our 3D artist models it.
+                  </p>
+                </div>
+                <span className="mt-4 inline-block text-[11px] font-semibold text-terracotta">
+                  CAD Modeling + Digital 3D Proof
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Drag & Drop Upload Zone */}
+          <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-xs font-bold text-white">
+                2
+              </span>
+              <h2 className="text-base sm:text-lg font-bold text-forest">
+                Upload 3D Files or Visual References
+              </h2>
+            </div>
+            <p className="mt-1 text-xs text-muted">
+              Supported file extensions: <span className="font-semibold text-ink">.stl, .obj, .3mf, .step, .png, .jpg, .pdf</span> (Max 50MB per file).
+            </p>
+
+            {/* Drag & Drop Zone */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault()
+                setIsDragging(true)
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`mt-4 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+                isDragging
+                  ? 'border-terracotta bg-terracotta/5'
+                  : 'border-black/15 bg-[#FBF8F2] hover:border-terracotta hover:bg-[#F5EFE6]'
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".stl,.obj,.3mf,.step,.png,.jpg,.jpeg,.pdf"
+                onChange={(e) => e.target.files && handleFiles(e.target.files)}
+                className="hidden"
+              />
+              <div className="grid h-14 w-14 place-items-center rounded-full bg-white text-terracotta shadow-xs">
+                <Upload size={24} />
+              </div>
+              <p className="mt-3 text-sm font-bold text-ink">
+                Click to browse files or drag and drop here
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {orderType === 'file-ready'
+                  ? 'Upload your 3D CAD files (.stl, .obj, .3mf, .step)'
+                  : 'Upload your reference sketches, brand logos, or photos'}
+              </p>
+            </div>
+
+            {/* File Preview List */}
+            {files.length > 0 && (
+              <div className="mt-5 space-y-2.5">
+                <p className="text-xs font-bold text-ink uppercase tracking-wider">
+                  Attached Files ({files.length})
+                </p>
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {files.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-black/10 bg-[#F5EFE6] px-4 py-2.5 text-xs"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {file.name.match(/\.(stl|obj|3mf|step)$/i) ? (
+                          <FileCode size={18} className="text-forest shrink-0" />
+                        ) : (
+                          <FileImage size={18} className="text-terracotta shrink-0" />
+                        )}
+                        <div className="truncate">
+                          <p className="font-semibold text-ink truncate">{file.name}</p>
+                          <p className="text-[10px] text-muted">{file.size}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteFile(file.id)
+                        }}
+                        className="text-muted hover:text-red-500 p-1 cursor-pointer"
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. Print Specifications */}
+          <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-xs font-bold text-white">
+                3
+              </span>
+              <h2 className="text-base sm:text-lg font-bold text-forest">
+                Print Specifications &amp; Sizing
+              </h2>
+            </div>
+
+            {/* Material & Finish */}
+            <div className="mt-6">
+              <label className="block text-xs font-bold text-ink uppercase tracking-wider">
+                Material &amp; Finish Preference
+              </label>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {materials.map((m) => (
                   <button
-                    key={type.id}
+                    key={m.id}
                     type="button"
-                    onClick={() => setItemType(type.id)}
-                    className={`flex flex-col justify-between rounded-2xl border p-4 text-left transition-all cursor-pointer ${
-                      itemType === type.id
+                    onClick={() => setSelectedMaterial(m.id)}
+                    className={`rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+                      selectedMaterial === m.id
                         ? 'border-forest bg-[#1B3B2B]/5 ring-1 ring-forest'
                         : 'border-black/10 bg-[#FBF8F2] hover:border-black/20'
                     }`}
                   >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-ink">{type.label}</span>
-                        {itemType === type.id && <Check size={16} className="text-forest" />}
-                      </div>
-                      <p className="mt-1 text-xs text-muted leading-tight">{type.desc}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-ink">{m.name}</span>
+                      {selectedMaterial === m.id && <CheckCircle2 size={16} className="text-forest" />}
                     </div>
-                    <p className="mt-3 text-xs font-bold text-terracotta">From ₱{type.basePrice}</p>
+                    <p className="mt-1 text-xs text-muted">{m.desc}</p>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 2. Custom Text & Typography */}
-            <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-forest text-xs font-bold text-white">
-                  2
-                </span>
-                <h2 className="text-base font-bold text-forest sm:text-lg">Custom Text / Engraving</h2>
+            {/* Color Preference */}
+            <div className="mt-6 border-t border-black/5 pt-5">
+              <label className="block text-xs font-bold text-ink uppercase tracking-wider">
+                Color Preference
+              </label>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {colorOptions.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedColorMode(c.id)}
+                    className={`rounded-2xl border p-3.5 text-left transition-all cursor-pointer ${
+                      selectedColorMode === c.id
+                        ? 'border-forest bg-[#1B3B2B]/5 ring-1 ring-forest'
+                        : 'border-black/10 bg-[#FBF8F2] hover:border-black/20'
+                    }`}
+                  >
+                    <p className="text-xs font-bold text-ink">{c.label}</p>
+                    <p className="mt-0.5 text-[11px] text-muted">{c.desc}</p>
+                  </button>
+                ))}
               </div>
 
-              <div className="mt-4">
-                <label htmlFor="customText" className="block text-xs font-semibold text-ink">
-                  Name, Initials, Monogram, or Slogan
+              <input
+                type="text"
+                value={colorNotes}
+                onChange={(e) => setColorNotes(e.target.value)}
+                placeholder="Optional: Specify desired colors (e.g., Terracotta body with Forest Green text)"
+                className="mt-3 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-xs sm:text-sm text-ink outline-none focus:border-terracotta"
+              />
+            </div>
+
+            {/* Dimensions & Quantity */}
+            <div className="mt-6 border-t border-black/5 pt-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="dimensions" className="block text-xs font-bold text-ink uppercase tracking-wider">
+                  Estimated Dimensions / Scale
                 </label>
                 <input
-                  id="customText"
+                  id="dimensions"
                   type="text"
-                  maxLength={32}
-                  value={customText}
-                  onChange={(e) => setCustomText(e.target.value)}
-                  placeholder="e.g. ATTY. RAMIREZ or MANILA 2026"
-                  className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-sm text-ink outline-none focus:border-terracotta"
+                  value={dimensions}
+                  onChange={(e) => setDimensions(e.target.value)}
+                  placeholder="e.g. 10cm x 5cm x 3cm or 100% CAD scale"
+                  className="mt-2 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-xs sm:text-sm text-ink outline-none focus:border-terracotta"
                 />
-                <p className="mt-1 text-[11px] text-muted">
-                  Max 32 characters. Text will be raised in 3D embossing with high-contrast accent filament.
-                </p>
               </div>
 
-              {/* Font Style Selection */}
-              <div className="mt-5">
-                <span className="block text-xs font-semibold text-ink">Embossing Font Style</span>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'modern', label: 'Modern Sans' },
-                    { id: 'script', label: 'Script Cursive' },
-                    { id: 'bold', label: 'Bold Serif' },
-                  ].map((f) => (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => setFontChoice(f.id)}
-                      className={`rounded-xl border py-2 text-xs font-semibold cursor-pointer transition-all ${
-                        fontChoice === f.id
-                          ? 'border-forest bg-forest text-white'
-                          : 'border-black/10 bg-[#FBF8F2] text-ink hover:bg-black/5'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
+              <div>
+                <label className="block text-xs font-bold text-ink uppercase tracking-wider">
+                  Quantity Needed
+                </label>
+                <div className="mt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuantityTier('prototype')
+                      if (unitsCount > 10) setUnitsCount(1)
+                    }}
+                    className={`flex-1 rounded-xl border py-2.5 px-3 text-xs font-semibold cursor-pointer ${
+                      quantityTier === 'prototype'
+                        ? 'border-forest bg-forest text-white'
+                        : 'border-black/10 bg-[#FBF8F2] text-ink'
+                    }`}
+                  >
+                    Single Prototype (1-5)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuantityTier('bulk')
+                      if (unitsCount < 20) setUnitsCount(25)
+                    }}
+                    className={`flex-1 rounded-xl border py-2.5 px-3 text-xs font-semibold cursor-pointer ${
+                      quantityTier === 'bulk'
+                        ? 'border-forest bg-forest text-white'
+                        : 'border-black/10 bg-[#FBF8F2] text-ink'
+                    }`}
+                  >
+                    Bulk / Souvenir Run (20+)
+                  </button>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* 3. Color Palette Swatches */}
-            <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-forest text-xs font-bold text-white">
-                  3
-                </span>
-                <h2 className="text-base font-bold text-forest sm:text-lg">Color Palette Selector</h2>
-              </div>
-
-              {/* Base/Primary Color */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-xs font-semibold text-ink">
-                  <span>Base Shell Color:</span>
-                  <span className="font-bold text-terracotta">{primaryColor.label}</span>
-                </div>
-                <div className="mt-2.5 flex flex-wrap gap-2.5">
-                  {colorSwatches.map((color) => (
-                    <button
-                      key={'primary-' + color.name}
-                      type="button"
-                      onClick={() => setPrimaryColor(color)}
-                      aria-label={color.label}
-                      className={`relative h-10 w-10 rounded-full border-2 transition-transform cursor-pointer hover:scale-110 ${
-                        primaryColor.name === color.name
-                          ? 'border-ink ring-2 ring-forest scale-105'
-                          : 'border-black/15'
-                      }`}
-                      style={{ backgroundColor: color.hex }}
-                    >
-                      {primaryColor.name === color.name && (
-                        <Check
-                          size={16}
-                          className={`absolute inset-0 m-auto ${
-                            color.name === 'Warm Cream' || color.name === 'Marble Pearl' || color.name === 'Solar Amber'
-                              ? 'text-ink'
-                              : 'text-white'
-                          }`}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Raised Accent Color */}
-              <div className="mt-6 border-t border-black/5 pt-5">
-                <div className="flex items-center justify-between text-xs font-semibold text-ink">
-                  <span>Raised Lettering / Accent Color:</span>
-                  <span className="font-bold text-forest">{accentColor.label}</span>
-                </div>
-                <div className="mt-2.5 flex flex-wrap gap-2.5">
-                  {colorSwatches.map((color) => (
-                    <button
-                      key={'accent-' + color.name}
-                      type="button"
-                      onClick={() => setAccentColor(color)}
-                      aria-label={color.label}
-                      className={`relative h-10 w-10 rounded-full border-2 transition-transform cursor-pointer hover:scale-110 ${
-                        accentColor.name === color.name
-                          ? 'border-ink ring-2 ring-forest scale-105'
-                          : 'border-black/15'
-                      }`}
-                      style={{ backgroundColor: color.hex }}
-                    >
-                      {accentColor.name === color.name && (
-                        <Check
-                          size={16}
-                          className={`absolute inset-0 m-auto ${
-                            color.name === 'Warm Cream' || color.name === 'Marble Pearl' || color.name === 'Solar Amber'
-                              ? 'text-ink'
-                              : 'text-white'
-                          }`}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* 4. Contact & Quote Delivery Preference */}
+          <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-xs font-bold text-white">
+                4
+              </span>
+              <h2 className="text-base sm:text-lg font-bold text-forest">
+                Contact &amp; Quote Delivery Preference
+              </h2>
             </div>
 
-            {/* 4. Upload Reference Photo/Logo */}
-            <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-forest text-xs font-bold text-white">
-                  4
-                </span>
-                <h2 className="text-base font-bold text-forest sm:text-lg">Reference Photo / Vector Logo</h2>
-              </div>
-              <p className="mt-1 text-xs text-muted">
-                Optional: Upload a sketch, logo file (PNG, JPG, SVG), or reference photo for our 3D modeler.
-              </p>
-
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-black/15 bg-[#FBF8F2] p-6 text-center transition-colors hover:border-terracotta"
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,.svg"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                {imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Uploaded reference"
-                      className="max-h-36 rounded-xl object-contain shadow-xs"
-                    />
-                    <p className="mt-2 text-xs font-semibold text-forest">
-                      {uploadedFile?.name} (Click to change)
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid h-12 w-12 place-items-center rounded-full bg-stone-warm text-terracotta">
-                      <Upload size={20} />
-                    </div>
-                    <p className="mt-3 text-xs font-bold text-ink">
-                      Click to upload image or drag &amp; drop
-                    </p>
-                    <p className="text-[11px] text-muted">PNG, JPG, SVG up to 10MB</p>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* 5. Contact & Notes */}
-            <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-forest text-xs font-bold text-white">
-                  5
-                </span>
-                <h2 className="text-base font-bold text-forest sm:text-lg">Your Details &amp; Notes</h2>
-              </div>
-
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="customerName" className="block text-xs font-semibold text-ink">
-                    Full Name <span className="text-terracotta">*</span>
-                  </label>
-                  <input
-                    id="customerName"
-                    type="text"
-                    required
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Juan Dela Cruz"
-                    className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-xs sm:text-sm text-ink outline-none focus:border-terracotta"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="customerEmail" className="block text-xs font-semibold text-ink">
-                    Email Address <span className="text-terracotta">*</span>
-                  </label>
-                  <input
-                    id="customerEmail"
-                    type="email"
-                    required
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="juan@example.com"
-                    className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-xs sm:text-sm text-ink outline-none focus:border-terracotta"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label htmlFor="customerPhone" className="block text-xs font-semibold text-ink">
-                  Phone / Mobile Number (for delivery updates)
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="fullName" className="block text-xs font-bold text-ink">
+                  Full Name <span className="text-terracotta">*</span>
                 </label>
                 <input
-                  id="customerPhone"
+                  id="fullName"
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Juan Dela Cruz"
+                  className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-xs sm:text-sm text-ink outline-none focus:border-terracotta"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-xs font-bold text-ink">
+                  Email Address <span className="text-terracotta">*</span>
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="juan@example.com"
+                  className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-xs sm:text-sm text-ink outline-none focus:border-terracotta"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="contactNumber" className="block text-xs font-bold text-ink">
+                  Contact Number (Mobile / Viber) <span className="text-terracotta">*</span>
+                </label>
+                <input
+                  id="contactNumber"
                   type="tel"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  required
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
                   placeholder="+63 917 123 4567"
                   className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-xs sm:text-sm text-ink outline-none focus:border-terracotta"
                 />
               </div>
 
-              <div className="mt-4">
-                <label htmlFor="notes" className="block text-xs font-semibold text-ink">
-                  Special Instructions / Dimension Notes
+              <div>
+                <label className="block text-xs font-bold text-ink">
+                  Preferred Response Channel
                 </label>
-                <textarea
-                  id="notes"
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Please add a bevel on the stand, or need this ready for an anniversary on Nov 15..."
-                  className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2 text-xs sm:text-sm text-ink outline-none focus:border-terracotta resize-none"
-                />
+                <div className="mt-1.5 flex gap-2">
+                  {['Email', 'Viber / WhatsApp / Phone'].map((method) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setResponseMethod(method)}
+                      className={`flex-1 rounded-xl border py-2.5 px-3 text-xs font-semibold cursor-pointer ${
+                        responseMethod === method
+                          ? 'border-forest bg-forest text-white'
+                          : 'border-black/10 bg-[#FBF8F2] text-ink'
+                      }`}
+                    >
+                      {method}
+                    </button>
+                  ))}
+                </div>
               </div>
+            </div>
+
+            <div className="mt-5">
+              <label htmlFor="projectNotes" className="block text-xs font-bold text-ink">
+                Additional Project Notes / Instructions
+              </label>
+              <textarea
+                id="projectNotes"
+                rows={4}
+                value={projectNotes}
+                onChange={(e) => setProjectNotes(e.target.value)}
+                placeholder="Describe your design, target deadline, event theme, functional requirements, or any specific questions..."
+                className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#FBF8F2] px-4 py-2.5 text-xs sm:text-sm text-ink outline-none focus:border-terracotta resize-none"
+              />
             </div>
           </div>
 
-          {/* Right Column: Live Interactive Preview & Summary (5 cols) */}
-          <div className="lg:col-span-5">
-            <div className="sticky top-24 space-y-6">
-              {/* Live Preview Card */}
-              <div className="overflow-hidden rounded-3xl border border-black/5 bg-white shadow-md">
-                <div className="border-b border-black/5 bg-[#F5EFE6] px-5 py-3.5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-forest">
-                    <Sparkles size={14} className="text-terracotta" />
-                    <span>Live 3D Print Simulation</span>
-                  </div>
-                  <span className="rounded-full bg-forest/10 px-2.5 py-0.5 text-[10px] font-semibold text-forest">
-                    {selectedItem.label}
-                  </span>
-                </div>
-
-                {/* Simulated 3D rendered plaque */}
-                <div className="p-6 sm:p-8 flex items-center justify-center min-h-[220px] bg-stone-warm/40">
-                  <div
-                    className="relative w-full max-w-xs rounded-2xl p-6 text-center shadow-xl transition-all duration-300"
-                    style={{
-                      backgroundColor: primaryColor.hex,
-                      border: `3px solid ${accentColor.hex}`,
-                    }}
-                  >
-                    <div className="text-[10px] font-semibold tracking-widest uppercase opacity-75" style={{ color: accentColor.hex }}>
-                      babi MNL Studio Edition
-                    </div>
-
-                    <div
-                      className={`mt-3 break-words text-xl sm:text-2xl font-extrabold tracking-tight drop-shadow-sm ${
-                        fontChoice === 'script' ? 'font-script text-3xl' : fontChoice === 'bold' ? 'font-serif uppercase' : 'font-sans'
-                      }`}
-                      style={{ color: accentColor.hex }}
-                    >
-                      {customText.trim() ? customText : 'YOUR CUSTOM TEXT'}
-                    </div>
-
-                    <div
-                      className="mt-3 mx-auto h-1 w-12 rounded-full opacity-80"
-                      style={{ backgroundColor: accentColor.hex }}
-                    />
-
-                    <div className="mt-2 text-[9px] font-medium opacity-65" style={{ color: accentColor.hex }}>
-                      100% Plant-Based Eco PLA • Manila
-                    </div>
-                  </div>
-                </div>
-
-                {/* Swatch & Spec Summary */}
-                <div className="border-t border-black/5 p-5 bg-white space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted">Selected Item:</span>
-                    <span className="font-semibold text-ink">{selectedItem.label}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted">Base Color:</span>
-                    <div className="flex items-center gap-1.5 font-semibold text-ink">
-                      <span className="h-3 w-3 rounded-full border border-black/20" style={{ backgroundColor: primaryColor.hex }} />
-                      <span>{primaryColor.name}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted">Accent Color:</span>
-                    <div className="flex items-center gap-1.5 font-semibold text-ink">
-                      <span className="h-3 w-3 rounded-full border border-black/20" style={{ backgroundColor: accentColor.hex }} />
-                      <span>{accentColor.name}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Order Calculation & Quantity */}
-              <div className="rounded-3xl border border-black/5 bg-[#F5EFE6] p-6 shadow-sm">
-                <h3 className="text-sm font-bold text-forest">Pricing &amp; Quantity</h3>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-ink font-medium">Quantity (Units):</span>
-                  <div className="flex items-center gap-3 rounded-full border border-black/10 bg-white px-3 py-1">
-                    <button
-                      type="button"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="text-muted hover:text-ink cursor-pointer"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="w-6 text-center text-xs font-bold text-ink">{quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="text-muted hover:text-ink cursor-pointer"
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                {quantity >= 10 && (
-                  <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-mint/20 px-3 py-1.5 text-[11px] font-semibold text-forest">
-                    <Sparkles size={12} className="text-forest" />
-                    <span>Bulk discount applied ({quantity >= 20 ? '20% off' : '10% off'})!</span>
-                  </div>
-                )}
-
-                <div className="mt-5 border-t border-black/10 pt-4 space-y-1.5 text-xs text-muted">
-                  <div className="flex justify-between">
-                    <span>Base unit price:</span>
-                    <span className="text-ink font-medium">₱{unitPrice}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Units:</span>
-                    <span className="text-ink font-medium">{quantity}</span>
-                  </div>
-                  <div className="flex justify-between text-sm font-extrabold text-forest pt-2 border-t border-black/5">
-                    <span>Estimated Total:</span>
-                    <span className="text-lg text-terracotta">₱{totalPrice}</span>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#1B3B2B] py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-forest-deep active:scale-95"
-                >
-                  <Sparkles size={16} /> Submit Custom Order
-                </button>
-
-                <p className="mt-3 text-center text-[11px] text-muted">
-                  No immediate payment required. Our artisan will review specs and email payment link upon CAD confirmation.
-                </p>
-              </div>
-            </div>
+          {/* 5. Submit Button */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#D96B43] py-4 text-base font-semibold text-white shadow-lg transition-all hover:bg-[#c25b36] hover:shadow-xl active:scale-98"
+            >
+              Submit for Free Price Quote →
+            </button>
+            <p className="mt-3 text-center text-xs text-muted flex items-center justify-center gap-1.5">
+              <Clock size={14} className="text-forest" />
+              Guaranteed quote reply within 24 hours • No upfront payment needed
+            </p>
           </div>
         </form>
 
@@ -503,6 +515,7 @@ export default function CustomOrderPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
             <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="absolute top-5 right-5 text-muted hover:text-ink cursor-pointer"
               >
@@ -514,25 +527,41 @@ export default function CustomOrderPage() {
               </div>
 
               <h3 className="mt-4 text-center text-2xl font-extrabold text-forest">
-                Custom Order Received!
+                Custom Order Inquiry Received!
               </h3>
               <p className="mt-2 text-center text-xs sm:text-sm text-muted">
-                Order Reference: <span className="font-mono font-bold text-terracotta">{orderRef}</span>
+                Quote Reference Code:{' '}
+                <span className="font-mono font-bold text-terracotta">{quoteRef}</span>
               </p>
 
               <div className="mt-6 rounded-2xl bg-[#F5EFE6] p-4 text-xs space-y-2 text-[#444444]">
-                <p><span className="font-semibold text-ink">Client:</span> {customerName} ({customerEmail})</p>
-                <p><span className="font-semibold text-ink">Item:</span> {selectedItem.label} x {quantity} unit(s)</p>
-                <p><span className="font-semibold text-ink">Custom Text:</span> "{customText || 'N/A'}"</p>
-                <p><span className="font-semibold text-ink">Colors:</span> {primaryColor.name} base + {accentColor.name} text</p>
-                <p><span className="font-semibold text-ink">Estimated Quote:</span> ₱{totalPrice}</p>
-                {uploadedFile && (
-                  <p><span className="font-semibold text-ink">File Attached:</span> {uploadedFile.name}</p>
+                <p>
+                  <span className="font-semibold text-ink">Client:</span> {fullName} ({email})
+                </p>
+                <p>
+                  <span className="font-semibold text-ink">Contact:</span> {contactNumber} via {responseMethod}
+                </p>
+                <p>
+                  <span className="font-semibold text-ink">Project Mode:</span>{' '}
+                  {orderType === 'file-ready'
+                    ? '3D File / Sample Ready'
+                    : 'Babi MNL Studio 3D Design Assistance'}
+                </p>
+                <p>
+                  <span className="font-semibold text-ink">Material &amp; Color:</span>{' '}
+                  {materials.find((m) => m.id === selectedMaterial)?.name} (
+                  {colorOptions.find((c) => c.id === selectedColorMode)?.label})
+                </p>
+                {files.length > 0 && (
+                  <p>
+                    <span className="font-semibold text-ink">Attached Files:</span>{' '}
+                    {files.map((f) => f.name).join(', ')}
+                  </p>
                 )}
               </div>
 
               <p className="mt-4 text-xs leading-relaxed text-[#555555] text-center">
-                Our team in Manila will review your file and generate a high-res 3D digital render for your approval within 24-48 hours.
+                Our 3D modeling and print specialists in Manila are analyzing your specifications. We will send you an itemized price quote, print duration estimate, and production timeline within 24 hours.
               </p>
 
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -541,14 +570,14 @@ export default function CustomOrderPage() {
                   onClick={() => setShowModal(false)}
                   className="flex-1 rounded-full bg-forest py-2.5 text-xs font-semibold text-white hover:bg-forest-deep"
                 >
-                  Done &amp; Close
+                  Done
                 </button>
                 <Link
                   to="/products"
                   onClick={() => setShowModal(false)}
                   className="flex-1 rounded-full border border-forest/20 text-center py-2.5 text-xs font-semibold text-forest hover:bg-forest/5"
                 >
-                  Browse Catalog
+                  Explore Catalog
                 </Link>
               </div>
             </div>

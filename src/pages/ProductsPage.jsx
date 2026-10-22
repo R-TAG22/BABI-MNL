@@ -1,97 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Filter, ShoppingBag, Check } from 'lucide-react'
-import { Stars, Placeholder, container } from '../components/shared'
-
-const catalog = [
-  {
-    id: 'jeepney-keychain',
-    name: 'Jeepney Keychain',
-    category: 'Keychains',
-    price: 299,
-    img: '/images/product-bestseller-jeepney.jpg',
-    badge: 'Best Seller',
-    isPdp: true,
-  },
-  {
-    id: 'palm-tree-medallion',
-    name: 'Miniature Palm Medallion',
-    category: 'Keychains',
-    price: 150,
-    img: '/images/Palm_tree_medallion_keychain_laid_2K_20261019221426.jpg',
-    badge: 'Popular',
-  },
-  {
-    id: 'carabao-miniature',
-    name: 'Carabao Hand-Finished Miniature',
-    category: 'Miniatures',
-    price: 350,
-    img: '/images/carabao.jpg',
-    badge: 'Artisan',
-  },
-  {
-    id: 'executive-nameplate',
-    name: 'Custom Dual-Layer Desk Nameplate',
-    category: 'Nameplates',
-    price: 399,
-    badge: 'Customizable',
-  },
-  {
-    id: 'baybayin-nameplate',
-    name: 'Baybayin Script Nameplate',
-    category: 'Nameplates',
-    price: 349,
-    badge: 'Heritage',
-  },
-  {
-    id: 'articulated-gecko',
-    name: 'Articulated Flexi Gecko',
-    category: 'Playful Toys',
-    price: 280,
-    badge: 'Interactive',
-  },
-  {
-    id: 'flexi-carabao-toy',
-    name: 'Flexi Carabao Playful Fidget',
-    category: 'Playful Toys',
-    price: 299,
-    img: '/images/carabao.jpg',
-    badge: 'Fun',
-  },
-  {
-    id: 'mayon-volcano-holder',
-    name: 'Mayon Volcano Desk Organizer',
-    category: 'Miniatures',
-    price: 420,
-    badge: 'Handmade',
-  },
-  {
-    id: 'retro-cassette-keychain',
-    name: 'Retro Cassette Mixtape Keychain',
-    category: 'Keychains',
-    price: 190,
-  },
-  {
-    id: 'gyroscope-fidget',
-    name: 'Concentric Gyroscope Spinner',
-    category: 'Playful Toys',
-    price: 220,
-  },
-  {
-    id: 'sarao-deluxe-jeepney',
-    name: 'Sarao Deluxe Multi-Part Jeepney',
-    category: 'Miniatures',
-    price: 499,
-    img: '/images/product-bestseller-jeepney.jpg',
-    badge: 'Deluxe',
-  },
-  {
-    id: 'minimalist-barcode-keychain',
-    name: 'Personalized Spotify / QR Keychain',
-    category: 'Keychains',
-    price: 199,
-  },
-]
+import { Stars, container } from '../components/shared'
+import { productsData } from '../data/products'
 
 const categories = ['All', 'Keychains', 'Nameplates', 'Miniatures', 'Playful Toys']
 
@@ -102,7 +13,7 @@ export default function ProductsPage({ onAddToCart }) {
   const [addedId, setAddedId] = useState(null)
 
   const filteredProducts = useMemo(() => {
-    return catalog
+    return productsData
       .filter((item) => {
         const matchesCategory =
           selectedCategory === 'All' || item.category === selectedCategory
@@ -114,12 +25,21 @@ export default function ProductsPage({ onAddToCart }) {
       .sort((a, b) => {
         if (sortBy === 'price-low') return a.price - b.price
         if (sortBy === 'price-high') return b.price - a.price
+        if (sortBy === 'rating') return b.rating - a.rating
         return 0
       })
   }, [selectedCategory, searchQuery, sortBy])
 
   const handleAddToCart = (product) => {
-    if (onAddToCart) onAddToCart(product)
+    if (onAddToCart) {
+      onAddToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        img: product.image,
+        quantity: 1,
+      })
+    }
     setAddedId(product.id)
     setTimeout(() => {
       setAddedId((curr) => (curr === product.id ? null : curr))
@@ -147,6 +67,7 @@ export default function ProductsPage({ onAddToCart }) {
             {categories.map((cat) => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setSelectedCategory(cat)}
                 className={`rounded-full px-5 py-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                   selectedCategory === cat
@@ -184,6 +105,7 @@ export default function ProductsPage({ onAddToCart }) {
                   <option value="featured">Featured</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
                 </select>
               </div>
             </div>
@@ -201,16 +123,14 @@ export default function ProductsPage({ onAddToCart }) {
               >
                 <div>
                   <div className="relative overflow-hidden rounded-2xl bg-white aspect-square">
-                    {p.img ? (
+                    <Link to={`/products/${p.slug}`}>
                       <img
-                        src={p.img}
+                        src={p.image}
                         alt={p.name}
                         loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                    ) : (
-                      <Placeholder label={p.name} className="h-full w-full" />
-                    )}
+                    </Link>
                     {p.badge && (
                       <span className="absolute top-2.5 left-2.5 rounded-full bg-forest/90 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-xs">
                         {p.badge}
@@ -219,27 +139,30 @@ export default function ProductsPage({ onAddToCart }) {
                   </div>
 
                   <h3 className="mt-3 px-1 text-sm font-semibold text-ink line-clamp-2">
-                    {p.isPdp ? (
-                      <Link to="/product" className="hover:text-terracotta transition-colors">
-                        {p.name}
-                      </Link>
-                    ) : (
-                      p.name
-                    )}
+                    <Link to={`/products/${p.slug}`} className="hover:text-terracotta transition-colors">
+                      {p.name}
+                    </Link>
                   </h3>
 
                   <div className="mt-1.5 px-1 flex items-center justify-between">
-                    <Stars />
-                    <span className="text-[11px] text-muted">5.0</span>
+                    <Stars size={13} />
+                    <span className="text-[11px] text-muted font-bold">★ {p.rating}</span>
                   </div>
 
                   <p className="mt-2 px-1 text-lg font-extrabold text-ink">₱{p.price}</p>
                 </div>
 
-                <div className="mt-3 pt-2">
+                <div className="mt-3 pt-2 flex gap-2">
+                  <Link
+                    to={`/products/${p.slug}`}
+                    className="flex-1 rounded-full border border-forest/20 text-center py-2 text-xs font-semibold text-forest hover:bg-forest/5"
+                  >
+                    View
+                  </Link>
                   <button
+                    type="button"
                     onClick={() => handleAddToCart(p)}
-                    className={`flex w-full items-center justify-center gap-1.5 rounded-full py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer active:scale-95 ${
+                    className={`flex items-center justify-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer active:scale-95 ${
                       isJustAdded
                         ? 'bg-forest text-white'
                         : 'bg-terracotta text-white hover:bg-[#c25b36] shadow-xs'
@@ -251,7 +174,7 @@ export default function ProductsPage({ onAddToCart }) {
                       </>
                     ) : (
                       <>
-                        <ShoppingBag size={14} /> Add to Cart
+                        <ShoppingBag size={14} /> Add
                       </>
                     )}
                   </button>
@@ -267,11 +190,12 @@ export default function ProductsPage({ onAddToCart }) {
             <p className="text-base font-semibold text-ink">No products found in this category.</p>
             <p className="mt-1 text-xs text-muted">Try choosing another filter or resetting your search.</p>
             <button
+              type="button"
               onClick={() => {
                 setSelectedCategory('All')
                 setSearchQuery('')
               }}
-              className="mt-4 rounded-full bg-forest px-5 py-2 text-xs font-semibold text-white"
+              className="mt-4 rounded-full bg-forest px-5 py-2 text-xs font-semibold text-white cursor-pointer"
             >
               Reset Filters
             </button>
